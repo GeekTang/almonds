@@ -51,20 +51,13 @@ public class ParseQuery
 				{
 					ParseObject parseObject = new ParseObject(mClassName);
 					JSONObject jsonObject = results.getJSONObject(i);
-					
+
 					for (String name : JSONObject.getNames(jsonObject))
 					{
 						parseObject.put(name, jsonObject.get(name));
 					}
-					
-					objects.add(parseObject);
 
-					/*
-					 * mCountries.put(
-					 * results.getJSONObject(i).getString("name"), new
-					 * Country(results.getJSONObject(i).getString( "objectId"),
-					 * results.getJSONObject(i) .getString("name")));
-					 */
+					objects.add(parseObject);
 
 				}
 			}
