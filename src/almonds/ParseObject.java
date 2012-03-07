@@ -62,16 +62,15 @@ public class ParseObject
 
 			if (entity != null)
 			{
-
 			}
 		}
 		catch (ClientProtocolException e)
 		{
-
+			System.out.println(e.getMessage());
 		}
 		catch (IOException e)
 		{
-
+			System.out.println(e.getMessage());
 		}
 		
 	}
@@ -83,13 +82,14 @@ public class ParseObject
 		try
 		{
 			for (String key : mData.keySet())
-				jo.put(key, mData.get(key));
+				jo.put(key, mData.get(key));				
 		}
 		catch (JSONException e)
 		{
 
 		}
-
+		
+		System.out.println(jo.toString());
 		return jo;
 	}
 
