@@ -46,6 +46,28 @@ public class ParseObject
 		return (String) mData.get(key);
 	}
 
+	class SaveInBackgroundThread extends Thread
+	{
+		SaveCallback mSaveCallback;
+
+		SaveInBackgroundThread(SaveCallback callback)
+		{
+			mSaveCallback = callback;
+		}
+
+		public void run()
+		{
+			save();
+			mSaveCallback.done();
+		}
+	}
+
+	public void saveInBackground(SaveCallback callback)
+	{
+		SaveInBackgroundThread t = new SaveInBackgroundThread(callback);
+		t.start();		
+	}
+
 	public void save()
 	{
 		try
@@ -72,7 +94,7 @@ public class ParseObject
 		{
 			System.out.println(e.getMessage());
 		}
-		
+
 	}
 
 	private JSONObject toJSONObject()
@@ -82,13 +104,13 @@ public class ParseObject
 		try
 		{
 			for (String key : mData.keySet())
-				jo.put(key, mData.get(key));				
+				jo.put(key, mData.get(key));
 		}
 		catch (JSONException e)
 		{
 
 		}
-		
+
 		System.out.println(jo.toString());
 		return jo;
 	}

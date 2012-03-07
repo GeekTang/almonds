@@ -29,6 +29,27 @@ public class ParseQuery
 		mClassName = className;
 	}
 
+	class FindInBackgroundThread extends Thread
+	{
+		FindCallback mFindCallback;
+
+		FindInBackgroundThread(FindCallback callback)
+		{
+			mFindCallback = callback;
+		}
+
+		public void run()
+		{
+			mFindCallback.done(find());
+		}
+	}
+
+	public void findInBackground(FindCallback callback)
+	{
+		FindInBackgroundThread t = new FindInBackgroundThread(callback);
+		t.start();
+	}
+
 	public List<ParseObject> find()
 	{
 		ArrayList<ParseObject> objects = null;
@@ -37,11 +58,11 @@ public class ParseQuery
 		{
 
 			HttpClient httpclient = new DefaultHttpClient();
-			HttpGet httpget = new HttpGet(Parse.getParseAPIUrlClasses() + mClassName + getURLConstraints());
+			HttpGet httpget = new HttpGet(Parse.getParseAPIUrlClasses() + mClassName
+					+ getURLConstraints());
 			httpget.addHeader("X-Parse-Application-Id", Parse.getApplicationId());
 			httpget.addHeader("X-Parse-REST-API-Key", Parse.getRestAPIKey());
-			
-	
+
 			HttpResponse response = httpclient.execute(httpget);
 			HttpEntity entity = response.getEntity();
 
@@ -110,7 +131,7 @@ public class ParseQuery
 		{
 			try
 			{
-				url = "?" + "where=" + URLEncoder.encode(getJSONConstraints(),"UTF-8");
+				url = "?" + "where=" + URLEncoder.encode(getJSONConstraints(), "UTF-8");
 			}
 			catch (UnsupportedEncodingException e)
 			{
