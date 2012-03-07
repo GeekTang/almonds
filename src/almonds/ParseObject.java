@@ -73,11 +73,7 @@ public class ParseObject
 		{
 
 		}
-		catch (JSONException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
 	}
 
 	private JSONObject toJSONObject()

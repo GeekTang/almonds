@@ -1,8 +1,10 @@
 package almonds;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.apache.http.HttpEntity;
@@ -20,6 +22,7 @@ import org.json.JSONObject;
 public class ParseQuery
 {
 	private String mClassName;
+	private SimpleEntry mWhereEqualTo = null;
 
 	public ParseQuery(String className)
 	{
@@ -34,9 +37,11 @@ public class ParseQuery
 		{
 
 			HttpClient httpclient = new DefaultHttpClient();
-			HttpGet httpget = new HttpGet(Parse.getParseAPIUrlClasses() + mClassName);
+			HttpGet httpget = new HttpGet(Parse.getParseAPIUrlClasses() + mClassName + getURLConstraints());
 			httpget.addHeader("X-Parse-Application-Id", Parse.getApplicationId());
 			httpget.addHeader("X-Parse-REST-API-Key", Parse.getRestAPIKey());
+			
+	
 			HttpResponse response = httpclient.execute(httpget);
 			HttpEntity entity = response.getEntity();
 
@@ -84,5 +89,57 @@ public class ParseQuery
 		}
 
 		return objects;
+	}
+
+	public ParseQuery whereEqualTo(String key, Object value)
+	{
+		mWhereEqualTo = new SimpleEntry<String, Object>(key, value);
+		return this;
+	}
+
+	private boolean hasConstraints()
+	{
+		return (mWhereEqualTo != null);
+	}
+
+	private String getURLConstraints()
+	{
+		String url = "";
+
+		if (hasConstraints())
+		{
+			try
+			{
+				url = "?" + "where=" + URLEncoder.encode(getJSONConstraints(),"UTF-8");
+			}
+			catch (UnsupportedEncodingException e)
+			{
+				e.printStackTrace();
+			}
+		}
+
+		return url;
+	}
+
+	private String getJSONConstraints()
+	{
+		String js = "";
+
+		if (mWhereEqualTo != null)
+		{
+			JSONObject jo = new JSONObject();
+
+			try
+			{
+				jo.put(((String) mWhereEqualTo.getKey()), mWhereEqualTo.getValue());
+				js = jo.toString();
+			}
+			catch (JSONException e)
+			{
+				e.printStackTrace();
+			}
+		}
+
+		return js;
 	}
 }
