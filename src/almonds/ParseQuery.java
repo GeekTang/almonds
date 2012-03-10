@@ -28,7 +28,80 @@ public class ParseQuery
 	{
 		mClassName = className;
 	}
+	
+	class GetInBackgroundThread extends Thread
+	{
+		GetCallback mGetCallback;
+		String mObjectId;
 
+		GetInBackgroundThread(String objectId, GetCallback callback)
+		{
+			mGetCallback = callback;
+			mObjectId = objectId;
+		}
+
+		public void run()
+		{
+			mGetCallback.done(get(mObjectId));
+		}
+	}
+
+	public void getInBackground (String objectId, GetCallback callback)
+	{
+		GetInBackgroundThread t = new GetInBackgroundThread(objectId, callback);
+		t.start();
+	}
+
+	public ParseObject get(String theObjectId)
+	{
+		ParseObject o = null;
+		
+		try
+		{
+			HttpClient httpclient = new DefaultHttpClient();
+			HttpGet httpget = new HttpGet(Parse.getParseAPIUrlClasses() + mClassName
+					+ "/" + theObjectId);
+			httpget.addHeader("X-Parse-Application-Id", Parse.getApplicationId());
+			httpget.addHeader("X-Parse-REST-API-Key", Parse.getRestAPIKey());
+
+			HttpResponse response = httpclient.execute(httpget);
+			HttpEntity entity = response.getEntity();
+	
+			if (entity != null)
+			{
+				JSONObject obj = new JSONObject(EntityUtils.toString(entity));
+				o = new ParseObject(mClassName);
+				
+				for (String name : JSONObject.getNames(obj))
+				{
+					o.put(name, obj.get(name));
+				}
+			}
+
+		}
+		catch (ClientProtocolException e)
+		{
+			e.printStackTrace();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		catch (ParseException e)
+		{
+			e.printStackTrace();
+		}
+		catch (JSONException e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+		}
+		
+		return o;
+	}
+	
 	class FindInBackgroundThread extends Thread
 	{
 		FindCallback mFindCallback;

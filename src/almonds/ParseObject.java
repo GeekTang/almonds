@@ -96,6 +96,16 @@ public class ParseObject
 		}
 
 	}
+	
+	public boolean containsKey(String key)
+	{
+		return mData.containsKey(key);
+	}
+	
+	public boolean has(String key)
+	{
+		return containsKey(key);
+	}
 
 	private JSONObject toJSONObject()
 	{
@@ -111,7 +121,6 @@ public class ParseObject
 
 		}
 
-		System.out.println(jo.toString());
 		return jo;
 	}
 
