@@ -9,7 +9,6 @@ import java.util.List;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -19,21 +18,34 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * @author js
+ * 
+ * 
+ *
+ */
 public class ParseQuery
 {
 	private String mClassName;
 	private SimpleEntry mWhereEqualTo = null;
 
+	/**
+	 * @param className
+	 */
 	public ParseQuery(String className)
 	{
 		mClassName = className;
 	}
-	
+
 	class GetInBackgroundThread extends Thread
 	{
 		GetCallback mGetCallback;
 		String mObjectId;
 
+		/**
+		 * @param objectId Testing GetInBackgroundThread
+		 * @param callback
+		 */
 		GetInBackgroundThread(String objectId, GetCallback callback)
 		{
 			mGetCallback = callback;
@@ -42,42 +54,69 @@ public class ParseQuery
 
 		public void run()
 		{
-			mGetCallback.done(get(mObjectId));
+			try
+			{
+				ParseObject getObject = get(mObjectId);
+				mGetCallback.done(getObject);
+			}
+			catch (ParseException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
-	public void getInBackground (String objectId, GetCallback callback)
+	
+	/**
+	 * @param objectId The Parse 'id' 
+	 * @param callback
+	 */
+	public void getInBackground(String objectId, GetCallback callback)
 	{
 		GetInBackgroundThread t = new GetInBackgroundThread(objectId, callback);
 		t.start();
 	}
 
-	public ParseObject get(String theObjectId)
+	public ParseObject get(String theObjectId) throws almonds.ParseException
 	{
 		ParseObject o = null;
-		
+
 		try
 		{
 			HttpClient httpclient = new DefaultHttpClient();
-			HttpGet httpget = new HttpGet(Parse.getParseAPIUrlClasses() + mClassName
-					+ "/" + theObjectId);
+			HttpGet httpget = new HttpGet(Parse.getParseAPIUrlClasses() + mClassName + "/"
+					+ theObjectId);
 			httpget.addHeader("X-Parse-Application-Id", Parse.getApplicationId());
 			httpget.addHeader("X-Parse-REST-API-Key", Parse.getRestAPIKey());
 
 			HttpResponse response = httpclient.execute(httpget);
 			HttpEntity entity = response.getEntity();
-	
+			
 			if (entity != null)
 			{
-				JSONObject obj = new JSONObject(EntityUtils.toString(entity));
-				o = new ParseObject(mClassName);
-				
-				for (String name : JSONObject.getNames(obj))
+				JSONObject jsonResponse = new JSONObject(EntityUtils.toString(entity));
+
+				//
+				// Check HTTP status code for error
+				//
+				int statusCode = response.getStatusLine().getStatusCode();
+
+				if (statusCode >= 200 && statusCode < 300)
 				{
-					o.put(name, obj.get(name));
+					o = new ParseObject(mClassName, jsonResponse);
+				}
+				else
+				{
+					throw new ParseException(jsonResponse.getInt("code"), "Error getting the requested object.  Reason: " + jsonResponse.getString("error"));
 				}
 			}
-
+			else
+			{
+				throw new ParseException (ParseException.CONNECTION_FAILED, "Connection failed with Parse servers.");
+			}
+			
+			return o;
 		}
 		catch (ClientProtocolException e)
 		{
@@ -98,10 +137,10 @@ public class ParseQuery
 		finally
 		{
 		}
-		
+
 		return o;
 	}
-	
+
 	class FindInBackgroundThread extends Thread
 	{
 		FindCallback mFindCallback;
@@ -170,7 +209,7 @@ public class ParseQuery
 		{
 			e.printStackTrace();
 		}
-		catch (ParseException e)
+		catch (org.apache.http.ParseException e)
 		{
 			e.printStackTrace();
 		}
