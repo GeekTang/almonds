@@ -15,12 +15,32 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * The ParseObject is a local representation of data that can be saved and retrieved from the Parse cloud.
+ * 
+ * The basic workflow for creating new data is to construct a new ParseObject, use put() to fill it with data, and then use save() to persist to the databa
+ * 
+ * The basic workflow for accessing existing data is to use a ParseQuery to specify which existing data to retrieve.
+ * 
+ * @author js
+ *
+ */
 public class ParseObject
 {
+	/**
+	 * A private helper class to facilitate running a ParseObject save operation in the background.
+	 * 
+	 * @author js
+	 *
+	 */
 	class SaveInBackgroundThread extends Thread
 	{
 		SaveCallback mSaveCallback;
 
+		/**
+		 * 
+		 * @param callback A function object of type Savecallback, whose method done will be called upon completion
+		 */
 		SaveInBackgroundThread(SaveCallback callback)
 		{
 			mSaveCallback = callback;
@@ -44,7 +64,11 @@ public class ParseObject
 	}
 
 	/**
+	 * Creates a new ParseObject based upon a class name. If the class name is a special type (e.g. for ParseUser), then the 
+	 * appropriate type of ParseObject is returned.
+	 * 
 	 * @param className
+	 * 
 	 * @return
 	 */
 	public static ParseObject create(String className)
@@ -56,6 +80,14 @@ public class ParseObject
 
 	private Hashtable<String, Object> mData;
 
+	/**
+	 * Constructs a new ParseObject with no data in it. A ParseObject constructed in this way will not have an objectId and will 
+	 * not persist to the database until save() is called.
+	 * 
+	 * Class names must be alphanumerical plus underscore, and start with a letter. It is recommended to name classes in CamelCaseLikeThis.
+	 * 
+	 * @param theClassName The className for this ParseObject.
+	 */
 	public ParseObject(String theClassName)
 	{
 		mClassName = theClassName;
@@ -63,6 +95,14 @@ public class ParseObject
 
 	}
 
+	/**
+	 * Used to support a query that returns an object from Parse encoded with JSON.  This constructor will create itself
+	 * from the JSON.  This is probably a poor method, especially if the JSON is mal-formed.  A better approach would be
+	 * move the handling to ParseQuery, where it alone would understands query responses from Parse.
+	 * 
+	 * @param theClassName The className for this ParseObject
+	 * @param json JSON encoded response from Parse corresponding to a ParseObject
+	 */
 	public ParseObject(String theClassName, JSONObject json)
 	{
 		mClassName = theClassName;
@@ -90,7 +130,7 @@ public class ParseObject
 					}
 					else if (oType.get("__type").equals("Date"))
 					{
-
+						throw new UnsupportedOperationException();
 					}
 				}
 				else
@@ -106,11 +146,23 @@ public class ParseObject
 
 	}
 
+	/**
+	 * Whether this object has a particular key. Same as 'has'.
+	 * 
+	 * @param key The key to check for
+	 * @return Returns whether this object contains the key
+	 */
 	public boolean containsKey(String key)
 	{
 		return mData.containsKey(key);
 	}
 
+	/**
+	 * Deletes this object on the server. This does not delete or destroy the object locally.
+	 * 
+	 * @throws ParseException Throws an error if the object does not exist or if the internet fails.
+	 * 
+	 */
 	public void delete() throws ParseException
 	{
 		try
@@ -167,16 +219,34 @@ public class ParseObject
 		}
 	}
 
+	/**
+	 * Accessor to the class name.
+	 * 
+	 * @return
+	 */
 	public String getClassName()
 	{
 		return mClassName;
 	}
 
+	/**
+	 * Accessor to the object id. An object id is assigned as soon as an object is saved to the server. The combination of a className and an 
+	 * objectId uniquely identifies an object in your application.
+	 * 
+	 * @return The object id.
+	 */
 	public String getObjectId()
 	{
 		return (String) mData.get("objectId");
 	}
 	
+	
+	/**
+	 * Setter for the object id. In general you do not need to use this. However, in some cases this can be convenient. For example, if you are serializing a ParseObject yourself 
+	 * and wish to recreate it, you can use this to recreate the ParseObject exactly.
+	 * 
+	 * @param objectId
+	 */
 	public void setObjectId(String objectId)
 	{
 		mData.put("objectId", objectId);		
@@ -187,11 +257,32 @@ public class ParseObject
 		mData.put("createdAt", createdAt);
 	}
 
+	/**
+	 * Access a ParsePointer value.
+	 * 
+	 * @param key The key to access the value for.
+	 * @return Returns null if there is no such key or if it is not a ParsePointer.
+	 */
 	public ParsePointer getParsePointer(String key)
 	{
-		return (ParsePointer) mData.get(key);
+		Object value = mData.get(key);
+		
+		if (value == null)
+			return null;
+		
+		// Verify that the value of this key is, in fact, a ParsePointer, returning null is not
+		if (value.getClass() != ParsePointer.class)
+			return null;
+		
+		return (ParsePointer) value;
 	}
 
+	/**
+	 * Creates and returns a new ParsePointer object that points to the object it's called on.  Use when other
+	 * objects need to point to *this* object.
+	 * 
+	 * @return A ParsePointer object set to point to this object.
+	 */
 	public ParsePointer getPointer()
 	{
 		return new ParsePointer(mClassName, getObjectId());
