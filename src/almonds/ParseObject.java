@@ -16,11 +16,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * The ParseObject is a local representation of data that can be saved and retrieved from the Parse cloud.
+ * The <b>ParseObject</b> is a local representation of data that can be saved and retrieved from the Parse cloud.
  * 
- * The basic workflow for creating new data is to construct a new ParseObject, use put() to fill it with data, and then use save() to persist to the databa
+ * <p>The basic workflow for creating new data is to construct a new ParseObject, use put() to fill it with data, and then use save() to persist to the databa
  * 
- * The basic workflow for accessing existing data is to use a ParseQuery to specify which existing data to retrieve.
+ * <p>The basic workflow for accessing existing data is to use a ParseQuery to specify which existing data to retrieve.
  * 
  * @author js
  *
@@ -288,6 +288,12 @@ public class ParseObject
 		return new ParsePointer(mClassName, getObjectId());
 	}
 
+	/**
+	 * Access a string value.
+	 * 
+	 * @param key The key to access the value for.
+	 * @return Returns null if there is no such key or if it is not a String. 
+	 */
 	public String getString(String key)
 	{
 		return (String) mData.get(key);

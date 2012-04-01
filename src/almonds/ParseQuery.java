@@ -19,9 +19,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
+ * The ParseQuery class defines a query that is used to fetch ParseObjects. The most common use case is finding all 
+ * objects that match a query through the findInBackground method, using a FindCallback.
+ * 
  * @author js
- * 
- * 
+ */
+/**
+ * @author js
  *
  */
 public class ParseQuery
@@ -30,20 +34,26 @@ public class ParseQuery
 	private SimpleEntry mWhereEqualTo = null;
 
 	/**
-	 * @param className
+	 * Constructs a query. A default query with no further parameters will retrieve all ParseObjects of the provided class.
+	 * 
+	 * @param className The name of the class to retrieve ParseObjects for.
 	 */
 	public ParseQuery(String className)
 	{
 		mClassName = className;
 	}
 
+	/**
+	 * Helper Thread to execute Parse Get calls off of the main application thread.
+	 *
+	 */
 	class GetInBackgroundThread extends Thread
 	{
 		GetCallback mGetCallback;
 		String mObjectId;
 
 		/**
-		 * @param objectId Testing GetInBackgroundThread
+		 * @param objectId
 		 * @param callback
 		 */
 		GetInBackgroundThread(String objectId, GetCallback callback)
@@ -69,8 +79,11 @@ public class ParseQuery
 
 	
 	/**
-	 * @param objectId The Parse 'id' 
-	 * @param callback
+	 * Constructs a ParseObject whose id is already known by fetching data from the server in a background thread.
+	 * This does not use caching. This is preferable to using the ParseObject(className, objectId) constructor, unless your code is already running in a background thread.
+	 * 
+	 * @param objectId Object id of the ParseObject to fetch. 
+	 * @param callback callback.done(object, e) will be called when the fetch completes.
 	 */
 	public void getInBackground(String objectId, GetCallback callback)
 	{
@@ -78,7 +91,14 @@ public class ParseQuery
 		t.start();
 	}
 
-	public ParseObject get(String theObjectId) throws almonds.ParseException
+	/**
+	 * Constructs a ParseObject whose id is already known by fetching data from the server. This does not use caching.
+	 * 
+	 * @param theObjectId Object id of the ParseObject to fetch.
+	 * @return 
+	 * @throws ParseException  Throws an exception when there is no such object or when the network connection fails.
+	 */
+	public ParseObject get(String theObjectId) throws ParseException
 	{
 		ParseObject o = null;
 
@@ -141,7 +161,11 @@ public class ParseQuery
 		return o;
 	}
 
-	class FindInBackgroundThread extends Thread
+	/**
+	 * A thread used to execute a ParseQuery find off of the main thread. 
+	 *
+	 */
+	private class FindInBackgroundThread extends Thread
 	{
 		FindCallback mFindCallback;
 
@@ -156,12 +180,24 @@ public class ParseQuery
 		}
 	}
 
+	/**
+	 * Retrieves a list of ParseObjects that satisfy this query from the server in a background thread. This is preferable to using find(), 
+	 * unless your code is already running in a background thread.
+	 * 
+	 * @param callback callback - callback.done(object, e) is called when the find completes.
+	 */
 	public void findInBackground(FindCallback callback)
 	{
 		FindInBackgroundThread t = new FindInBackgroundThread(callback);
 		t.start();
 	}
 
+	
+	/**
+	 * Retrieves a list of ParseObjects that satisfy this query. Uses the network and/or the cache, depending on the cache policy.
+	 * 
+	 * @return A list of all ParseObjects obeying the conditions set in this query.
+	 */
 	public List<ParseObject> find()
 	{
 		ArrayList<ParseObject> objects = null;
@@ -224,17 +260,35 @@ public class ParseQuery
 		return objects;
 	}
 
+	/**
+	 * Add a constraint to the query that requires a particular key's value to be equal to the provided value.
+	 * 
+	 * @param key The key to check.
+	 * @param value The value that the ParseObject must contain.
+	 * @return Returns the query, so you can chain this call.
+	 */
 	public ParseQuery whereEqualTo(String key, Object value)
 	{
 		mWhereEqualTo = new SimpleEntry<String, Object>(key, value);
 		return this;
 	}
 
+	/**
+	 * Helper to easily decide if any contraints have been set.
+	 * 
+	 * @return True if any type of contraints have been placed on the Query
+	 */
 	private boolean hasConstraints()
 	{
 		return (mWhereEqualTo != null);
 	}
 
+	/**
+	 * Constraints on a Query using the REST API are communicated as 'where' parameters in the URL.  This
+	 * method takes the current constraints on the Query and returns them formatted as a partial URL.
+	 * 
+	 * @return The URL formatted Query constraints.
+	 */
 	private String getURLConstraints()
 	{
 		String url = "";
@@ -254,6 +308,12 @@ public class ParseQuery
 		return url;
 	}
 
+	/**
+	 * Creates a Parse readable JSON string containing the current Query constraints.  This can then be
+	 * URL formatted for using in an HTTP request.
+	 * 
+	 * @return A Parse readable JSON string of constraints to place on a Query.
+	 */
 	private String getJSONConstraints()
 	{
 		String js = "";
