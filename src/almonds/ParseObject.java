@@ -30,42 +30,6 @@ public class ParseObject
 {
 	private static final String FIELD_CREATED_AT = "createdAt";
 	private static final String FIELD_UPDATED_AT = "updatedAt";
-	
-	/**
-	 * A private helper class to facilitate running a ParseObject save operation in the background.
-	 * 
-	 * @author js
-	 *
-	 */
-	class SaveInBackgroundThread extends Thread
-	{
-		SaveCallback mSaveCallback;
-
-		/**
-		 * 
-		 * @param callback A function object of type Savecallback, whose method done will be called upon completion
-		 */
-		SaveInBackgroundThread(SaveCallback callback)
-		{
-			mSaveCallback = callback;
-		}
-
-		public void run()
-		{
-			ParseException exception = null;
-			
-			try
-			{
-				save();
-			}
-			catch (ParseException e)
-			{
-				exception = e;			
-			}
-			
-			mSaveCallback.done(exception);
-		}
-	}
 
 	/**
 	 * Creates a new ParseObject based upon a class name. If the class name is a special type (e.g. for ParseUser), then the 
@@ -390,6 +354,46 @@ public class ParseObject
 
 	}
 
+	
+	/**
+	 * A private helper class to facilitate running a ParseObject save operation in the background.
+	 * 
+	 * @author js
+	 *
+	 */
+	class SaveInBackgroundThread extends Thread
+	{
+		SaveCallback mSaveCallback;
+
+		/**
+		 * 
+		 * @param callback A function object of type Savecallback, whose method done will be called upon completion
+		 */
+		SaveInBackgroundThread(SaveCallback callback)
+		{
+			mSaveCallback = callback;
+		}
+
+		public void run()
+		{
+			ParseException exception = null;
+			
+			try
+			{
+				save();
+			}
+			catch (ParseException e)
+			{
+				exception = e;			
+			}
+
+			if (mSaveCallback != null)
+			{
+				mSaveCallback.done(exception);
+			}
+		}
+	}
+
 	/**
 	 * Saves this object to the server in a background thread. This is preferable to using save(), unless your code is already running from a background thread.
 	 * 
@@ -399,6 +403,14 @@ public class ParseObject
 	{
 		SaveInBackgroundThread t = new SaveInBackgroundThread(callback);
 		t.start();
+	}
+	
+	/**
+	 * Saves this object to the server in a background thread. Use this when you do not have code to run on completion of the push.
+	 */
+	public void saveInBackground()
+	{
+		saveInBackground(null);
 	}
 
 	private JSONObject toJSONObject()
