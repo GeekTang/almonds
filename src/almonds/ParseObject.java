@@ -1,6 +1,7 @@
 package almonds;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Hashtable;
 
 import org.apache.http.HttpEntity;
@@ -27,6 +28,9 @@ import org.json.JSONObject;
  */
 public class ParseObject
 {
+	private static final String FIELD_CREATED_AT = "createdAt";
+	private static final String FIELD_UPDATED_AT = "updatedAt";
+	
 	/**
 	 * A private helper class to facilitate running a ParseObject save operation in the background.
 	 * 
@@ -112,7 +116,6 @@ public class ParseObject
 		{
 			try
 			{
-
 				/*
 				 * Check for data types here. If the 'value' is JSONObject then
 				 * there's additional data type information.
@@ -135,7 +138,17 @@ public class ParseObject
 				}
 				else
 				{
-					put(name, json.get(name));
+					Object value = json.get(name); // the value associated with key 'name'
+					
+					/*
+					 * Check for special fields, createdAt and updatedAt, which will be formatted and stored as Dates.
+					 */
+					if (name.equals(FIELD_CREATED_AT) || name.equals(FIELD_UPDATED_AT))
+					{
+						value = javax.xml.bind.DatatypeConverter.parseDateTime((String) value).getTime();						
+					}
+
+					put(name, value);
 				}
 			}
 			catch (JSONException e)
@@ -299,16 +312,23 @@ public class ParseObject
 		return (String) mData.get(key);
 	}
 
-	public boolean has(String key)
-	{
-		return containsKey(key);
-	}
-
+	/**
+	 * Add a key-value pair to this object. It is recommended to name keys in partialCamelCaseLikeThis.
+	 * 
+	 * @param key Keys must be alphanumerical plus underscore, and start with a letter.
+	 * @param value Values may be numerical, String, JSONObject, JSONArray, JSONObject.NULL, or other ParseObjects. value may not be null.
+	 */
 	public void put(String key, Object value)
 	{
 		mData.put(key, value);
 	}
 
+	/**
+	 * Saves this object to the server. Typically, you should use saveInBackground(com.parse.SaveCallback) instead of this, 
+	 * unless you are managing your own threading.
+
+	 * @throws ParseException Throws an exception if the server is inaccessible.
+	 */
 	public void save() throws ParseException
 	{
 		try
@@ -370,6 +390,11 @@ public class ParseObject
 
 	}
 
+	/**
+	 * Saves this object to the server in a background thread. This is preferable to using save(), unless your code is already running from a background thread.
+	 * 
+	 * @param callback callback.done(e) is called when the save completes.
+	 */
 	public void saveInBackground(SaveCallback callback)
 	{
 		SaveInBackgroundThread t = new SaveInBackgroundThread(callback);
@@ -392,5 +417,42 @@ public class ParseObject
 
 		return jo;
 	}
-
+	
+	private Object get(String key)
+	{
+		return mData.get(key);
+	}
+	
+	/**
+	 * Access a Date value.
+	 * 
+	 * @param key The key to access the value for.
+	 * @return Returns null if there is no such key or if it is not a Date.
+	 */
+	public Date getDate(String key)
+	{
+		return (Date) get(key);
+	}
+	
+	/**
+	 * This reports time as the server sees it, so that if you make changes to a ParseObject, then wait a while, and then call save(), 
+	 * the updated time will be the time of the save() call rather than the time the object was changed locally.
+	 * 
+	 * @return The last time this object was updated on the server.
+	 */
+	public Date getUpdatedAt()
+	{
+		return getDate(FIELD_UPDATED_AT);
+	}
+	
+	/**
+	 * This reports time as the server sees it, so that if you create a ParseObject, then wait a while, and then call save(), the 
+	 * creation time will be the time of the first save() call rather than the time the object was created locally.
+	 * 
+	 * @return The first time this object was saved on the server.
+	 */
+	public Date getCreatedAt()
+	{
+		return getDate(FIELD_CREATED_AT);
+	}
 }

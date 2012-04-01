@@ -24,10 +24,6 @@ import org.json.JSONObject;
  * 
  * @author js
  */
-/**
- * @author js
- *
- */
 public class ParseQuery
 {
 	private String mClassName;
