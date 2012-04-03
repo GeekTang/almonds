@@ -133,6 +133,66 @@ public class ParseObject
 	{
 		return mData.containsKey(key);
 	}
+	
+	/**
+	 * A private helper class to facilitate running a ParseObject delete operation in the background.
+	 * 
+	 * @author js
+	 *
+	 */
+	class DeleteInBackgroundThread extends Thread
+	{
+		DeleteCallback mDeleteCallback;
+
+		/**
+		 * 
+		 * @param callback A function object of type DeleteCallback, whose method done will be called upon completion
+		 */
+		DeleteInBackgroundThread(DeleteCallback callback)
+		{
+			mDeleteCallback = callback;
+		}
+
+		public void run()
+		{
+			ParseException exception = null;
+			
+			try
+			{
+				delete();
+			}
+			catch (ParseException e)
+			{
+				exception = e;			
+			}
+
+			if (mDeleteCallback != null)
+			{
+				mDeleteCallback.done(exception);
+			}
+		}
+	}
+	
+	/**
+	 *Deletes this object on the server in a background thread. Does nothing in particular when the save completes. 
+	 *Use this when you don't care if the delete works. 
+	 */
+	public void deleteInBackground()
+	{
+		deleteInBackground(null);		
+	}
+	
+	/**
+	 * Deletes this object on the server in a background thread. This is preferable to using delete(), unless your code is already 
+	 * running from a background thread.
+	 * 
+	 * @param callback  callback.done(e) is called when the save completes.
+	 */
+	public void deleteInBackground(DeleteCallback callback)
+	{
+		DeleteInBackgroundThread thread = new DeleteInBackgroundThread(callback);
+		thread.run();
+	}
 
 	/**
 	 * Deletes this object on the server. This does not delete or destroy the object locally.
