@@ -467,4 +467,15 @@ public class ParseObject
 	{
 		return getDate(FIELD_CREATED_AT);
 	}
+	
+	/**
+	 * Decides if the calling ParseObject and the parameter ParseObject have the same Parse Id.
+	 * 
+	 * @param asThisObject Parse Object to compare with
+	 * @return True if the Ids of the two objects are equal, false otherwise
+	 */
+	public boolean hasSameId(ParseObject asThisObject)
+	{
+		return this.getObjectId().equals(asThisObject.getObjectId());
+	}
 }
