@@ -302,15 +302,13 @@ public class ParseObject
 	 */
 	public ParsePointer getParsePointer(String key)
 	{
-		Object value = mData.get(key);
+		Object value = get(key);
 		
-		if (value == null)
+		// test for no such key or not a ParsePointer
+		
+		if (value == null || value.getClass() != ParsePointer.class)
 			return null;
-		
-		// Verify that the value of this key is, in fact, a ParsePointer, returning null is not
-		if (value.getClass() != ParsePointer.class)
-			return null;
-		
+				
 		return (ParsePointer) value;
 	}
 
@@ -333,7 +331,79 @@ public class ParseObject
 	 */
 	public String getString(String key)
 	{
-		return (String) mData.get(key);
+		Object value = get(key);
+		
+		// test for no such key or value not a string
+		
+		if (value == null || value.getClass() != String.class)
+			return null;
+		
+		return (String) value;
+	}
+	
+	/**
+	 * Access a boolean value.
+	 * 
+	 * @param key  The key to access the value for.
+	 * @return Returns false if there is no such key or if it is not a boolean.
+	 */
+	public Boolean getBoolean(String key)
+	{
+		Object value = get(key);
+		
+		// test for no such key or value not a string
+		
+		if (value == null || value.getClass() != Boolean.class)
+			return null;
+		
+		return (Boolean) value;		
+	}
+	
+	/**
+	 * Encapsulates access to the HashTable that stores key/value pairs stored by this Object
+	 *  
+	 * @param key The key to access the value for
+	 * @return Returns null if there is no such key
+	 */
+	private Object get(String key)
+	{
+		return mData.get(key);
+	}
+	
+	/**
+	 * Access a Date value.
+	 * 
+	 * @param key The key to access the value for.
+	 * @return Returns null if there is no such key or if it is not a Date.
+	 */
+	public Date getDate(String key)
+	{
+		Object value = get(key);
+		
+		// test for no such key or value not a string
+		
+		if (value == null || value.getClass() != Date.class)
+			return null;
+		
+		return (Date) value;
+	}	
+	
+	/**
+	 * 	Access a long value.
+	 * 
+	 * @param key The key to access the value for. 
+	 * @return Returns null if there is no such key or if it is not a long.
+	 */
+	public Long getLong(String key)
+	{
+		Object value = get(key);
+		
+		// test for no such key or value not a long
+		
+		if (value == null || value.getClass() != Long.class)
+			return null;
+		
+		return (Long) value;
 	}
 
 	/**
@@ -480,7 +550,7 @@ public class ParseObject
 		try
 		{
 			for (String key : mData.keySet())
-				jo.put(key, mData.get(key));
+				jo.put(key, get(key));
 		}
 		catch (JSONException e)
 		{
@@ -488,22 +558,6 @@ public class ParseObject
 		}
 
 		return jo;
-	}
-	
-	private Object get(String key)
-	{
-		return mData.get(key);
-	}
-	
-	/**
-	 * Access a Date value.
-	 * 
-	 * @param key The key to access the value for.
-	 * @return Returns null if there is no such key or if it is not a Date.
-	 */
-	public Date getDate(String key)
-	{
-		return (Date) get(key);
 	}
 	
 	/**
