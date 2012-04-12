@@ -5,6 +5,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.http.HttpEntity;
@@ -19,20 +20,28 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * The ParseQuery class defines a query that is used to fetch ParseObjects. The most common use case is finding all 
- * objects that match a query through the findInBackground method, using a FindCallback.
+ * The ParseQuery class defines a query that is used to fetch ParseObjects. The
+ * most common use case is finding all objects that match a query through the
+ * findInBackground method, using a FindCallback.
  * 
  * @author js
  */
 public class ParseQuery
 {
-	private String mClassName;
-	private SimpleEntry mWhereEqualTo = null;
+	private String mClassName; // the name of the Parse class to perform the
+								// query on
+	private SimpleEntry mWhereEqualTo = null; // tracks "WHERE" constraints
+	private List<String> mOrder = new ArrayList<String>(); // tracks keys to
+															// sort by
+	private int mLimit = -1;
+	private int mSkip = 0;
 
 	/**
-	 * Constructs a query. A default query with no further parameters will retrieve all ParseObjects of the provided class.
+	 * Constructs a query. A default query with no further parameters will
+	 * retrieve all ParseObjects of the provided class.
 	 * 
-	 * @param className The name of the class to retrieve ParseObjects for.
+	 * @param className
+	 *            The name of the class to retrieve ParseObjects for.
 	 */
 	public ParseQuery(String className)
 	{
@@ -40,8 +49,9 @@ public class ParseQuery
 	}
 
 	/**
-	 * Helper Thread to execute Parse Get calls off of the main application thread.
-	 *
+	 * Helper Thread to execute Parse Get calls off of the main application
+	 * thread.
+	 * 
 	 */
 	class GetInBackgroundThread extends Thread
 	{
@@ -73,13 +83,17 @@ public class ParseQuery
 		}
 	}
 
-	
 	/**
-	 * Constructs a ParseObject whose id is already known by fetching data from the server in a background thread.
-	 * This does not use caching. This is preferable to using the ParseObject(className, objectId) constructor, unless your code is already running in a background thread.
+	 * Constructs a ParseObject whose id is already known by fetching data from
+	 * the server in a background thread. This does not use caching. This is
+	 * preferable to using the ParseObject(className, objectId) constructor,
+	 * unless your code is already running in a background thread.
 	 * 
-	 * @param objectId Object id of the ParseObject to fetch. 
-	 * @param callback callback.done(object, e) will be called when the fetch completes.
+	 * @param objectId
+	 *            Object id of the ParseObject to fetch.
+	 * @param callback
+	 *            callback.done(object, e) will be called when the fetch
+	 *            completes.
 	 */
 	public void getInBackground(String objectId, GetCallback callback)
 	{
@@ -88,11 +102,15 @@ public class ParseQuery
 	}
 
 	/**
-	 * Constructs a ParseObject whose id is already known by fetching data from the server. This does not use caching.
+	 * Constructs a ParseObject whose id is already known by fetching data from
+	 * the server. This does not use caching.
 	 * 
-	 * @param theObjectId Object id of the ParseObject to fetch.
-	 * @return 
-	 * @throws ParseException  Throws an exception when there is no such object or when the network connection fails.
+	 * @param theObjectId
+	 *            Object id of the ParseObject to fetch.
+	 * @return
+	 * @throws ParseException
+	 *             Throws an exception when there is no such object or when the
+	 *             network connection fails.
 	 */
 	public ParseObject get(String theObjectId) throws ParseException
 	{
@@ -108,7 +126,7 @@ public class ParseQuery
 
 			HttpResponse response = httpclient.execute(httpget);
 			HttpEntity entity = response.getEntity();
-			
+
 			if (entity != null)
 			{
 				JSONObject jsonResponse = new JSONObject(EntityUtils.toString(entity));
@@ -124,14 +142,17 @@ public class ParseQuery
 				}
 				else
 				{
-					throw new ParseException(jsonResponse.getInt("code"), "Error getting the requested object.  Reason: " + jsonResponse.getString("error"));
+					throw new ParseException(jsonResponse.getInt("code"),
+							"Error getting the requested object.  Reason: "
+									+ jsonResponse.getString("error"));
 				}
 			}
 			else
 			{
-				throw new ParseException (ParseException.CONNECTION_FAILED, "Connection failed with Parse servers.");
+				throw new ParseException(ParseException.CONNECTION_FAILED,
+						"Connection failed with Parse servers.");
 			}
-			
+
 			return o;
 		}
 		catch (ClientProtocolException e)
@@ -158,8 +179,8 @@ public class ParseQuery
 	}
 
 	/**
-	 * A thread used to execute a ParseQuery find off of the main thread. 
-	 *
+	 * A thread used to execute a ParseQuery find off of the main thread.
+	 * 
 	 */
 	private class FindInBackgroundThread extends Thread
 	{
@@ -177,10 +198,13 @@ public class ParseQuery
 	}
 
 	/**
-	 * Retrieves a list of ParseObjects that satisfy this query from the server in a background thread. This is preferable to using find(), 
-	 * unless your code is already running in a background thread.
+	 * Retrieves a list of ParseObjects that satisfy this query from the server
+	 * in a background thread. This is preferable to using find(), unless your
+	 * code is already running in a background thread.
 	 * 
-	 * @param callback callback - callback.done(object, e) is called when the find completes.
+	 * @param callback
+	 *            callback - callback.done(object, e) is called when the find
+	 *            completes.
 	 */
 	public void findInBackground(FindCallback callback)
 	{
@@ -188,11 +212,12 @@ public class ParseQuery
 		t.start();
 	}
 
-	
 	/**
-	 * Retrieves a list of ParseObjects that satisfy this query. Uses the network and/or the cache, depending on the cache policy.
+	 * Retrieves a list of ParseObjects that satisfy this query. Uses the
+	 * network and/or the cache, depending on the cache policy.
 	 * 
-	 * @return A list of all ParseObjects obeying the conditions set in this query.
+	 * @return A list of all ParseObjects obeying the conditions set in this
+	 *         query.
 	 */
 	public List<ParseObject> find()
 	{
@@ -257,10 +282,13 @@ public class ParseQuery
 	}
 
 	/**
-	 * Add a constraint to the query that requires a particular key's value to be equal to the provided value.
+	 * Add a constraint to the query that requires a particular key's value to
+	 * be equal to the provided value.
 	 * 
-	 * @param key The key to check.
-	 * @param value The value that the ParseObject must contain.
+	 * @param key
+	 *            The key to check.
+	 * @param value
+	 *            The value that the ParseObject must contain.
 	 * @return Returns the query, so you can chain this call.
 	 */
 	public ParseQuery whereEqualTo(String key, Object value)
@@ -270,47 +298,132 @@ public class ParseQuery
 	}
 
 	/**
-	 * Helper to easily decide if any contraints have been set.
+	 * Helper to easily decide if any where or order constraints have been set.
 	 * 
-	 * @return True if any type of contraints have been placed on the Query
+	 * @return True if any type of constraints have been placed on the Query
 	 */
 	private boolean hasConstraints()
 	{
-		return (mWhereEqualTo != null);
+		return hasWhereConstraints() || hasOrderConstraints() || hasLimitConstraints();
+	}
+
+	private boolean hasLimitConstraints()
+	{
+		return mLimit >= 0;
+	}
+
+	private boolean hasWhereConstraints()
+	{
+		return mWhereEqualTo != null;
+	}
+
+	private boolean hasOrderConstraints()
+	{
+		return !mOrder.isEmpty();
+	}
+	
+	private boolean hasSkipConstraints()
+	{
+		return mSkip > 0;
 	}
 
 	/**
-	 * Constraints on a Query using the REST API are communicated as 'where' parameters in the URL.  This
-	 * method takes the current constraints on the Query and returns them formatted as a partial URL.
+	 * Constraints on a Query using the REST API are communicated as 'where' and
+	 * 'order', 'limit' and 'skip' parameters in the URL. This method takes the current constraints
+	 * on the Query and returns them formatted as a partial URL.
 	 * 
 	 * @return The URL formatted Query constraints.
 	 */
 	private String getURLConstraints()
 	{
 		String url = "";
+		Boolean firstParam = true;
 
-		if (hasConstraints())
+		try
 		{
-			try
+
+			if (hasConstraints())
 			{
-				url = "?" + "where=" + URLEncoder.encode(getJSONConstraints(), "UTF-8");
+				url = "?";
+
+				if (hasWhereConstraints())
+				{
+					url += "where=" + URLEncoder.encode(getJSONWhereConstraints(), "UTF-8");
+					firstParam = false;
+				}
+
+				if (hasOrderConstraints())
+				{
+					if (!firstParam)
+					{
+						url += "&";
+					}
+					else
+					{
+						firstParam = false;
+					}
+
+					url += "order=";
+
+					String orderParams = "";
+
+					for (Iterator<String> i = mOrder.iterator(); i.hasNext();)
+					{
+						orderParams += i.next();
+
+						if (i.hasNext())
+						{
+							orderParams += ",";
+						}
+					}
+
+					url += URLEncoder.encode(orderParams, "UTF-8");
+				}
+
+				if (hasLimitConstraints())
+				{
+					if (!firstParam)
+					{
+						url += "&";
+					}
+					else
+					{
+						firstParam = false;
+					}
+
+					url += URLEncoder.encode("limit=" + mLimit, "UTF-8");
+				}
+				
+				if (hasSkipConstraints())
+				{				
+					if (!firstParam)
+					{
+						url += "&";
+					}
+					else
+					{
+						firstParam = false;
+					}
+					
+					url += URLEncoder.encode("skip=" + mSkip, "UTF-8");
+				}
 			}
-			catch (UnsupportedEncodingException e)
-			{
-				e.printStackTrace();
-			}
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			url = "";
 		}
 
 		return url;
 	}
 
 	/**
-	 * Creates a Parse readable JSON string containing the current Query constraints.  This can then be
-	 * URL formatted for using in an HTTP request.
+	 * Creates a Parse readable JSON string containing the current Query where
+	 * constraints. This can then be URL formatted for using in an HTTP request.
 	 * 
 	 * @return A Parse readable JSON string of constraints to place on a Query.
 	 */
-	private String getJSONConstraints()
+	private String getJSONWhereConstraints()
 	{
 		String js = "";
 
@@ -330,5 +443,104 @@ public class ParseQuery
 		}
 
 		return js;
+	}
+
+	/**
+	 * Sorts the results in descending order by the given key.
+	 * 
+	 * @param key
+	 *            The key to order by.
+	 * @return Returns the query, so you can chain this call.
+	 */
+	public ParseQuery orderByDescending(String key)
+	{
+		mOrder.add("-" + key);
+		return this;
+	}
+
+	/**
+	 * Also sorts the results in descending order by the given key. The previous
+	 * sort keys have precedence over this key.
+	 * 
+	 * @param key
+	 *            The key to order by.
+	 * @return Returns the query so you can chain this call.
+	 */
+	public ParseQuery addDescendingOrder(String key)
+	{
+		return orderByDescending(key);
+	}
+
+	/**
+	 * Sorts the results in ascending order by the given key.
+	 * 
+	 * @param key
+	 *            The key to order by.
+	 * @return Returns the query, so you can chain this call.
+	 */
+	public ParseQuery orderByAscending(String key)
+	{
+		mOrder.add(key);
+		return this;
+	}
+
+	/**
+	 * Also sorts the results in ascending order by the given key. The previous
+	 * sort keys have precedence over this key.
+	 * 
+	 * @param key
+	 *            The key to order by.
+	 * @return Returns the query so you can chain this call.
+	 */
+	public ParseQuery addAscendingOrder(String key)
+	{
+		return orderByAscending(key);
+	}
+
+	/**
+	 * Controls the maximum number of results that are returned. Setting a
+	 * negative limit denotes retrieval without a limit.
+	 * 
+	 * @param newLimit
+	 */
+	public void setLimit(int newLimit)
+	{
+		mLimit = newLimit;
+	}
+
+	/**
+	 * Accessor for the limit. Defaults to -1 which instructs a retrieval
+	 * without a limit.
+	 * 
+	 * @return
+	 */
+	public int getLimit()
+	{
+		return mLimit;
+	}
+	
+	/**
+	 * Controls the number of results to skip before returning any results. This is useful for pagination. Default is to skip zero results.
+	 * 
+	 * @param newSkip
+	 */
+	public void setSkip(int newSkip)
+	{
+		if (newSkip < 0)
+		{
+			return;
+		}
+		
+		mSkip = newSkip;		
+	}
+	
+	/**
+	 * Accessor for the skip value.
+	 * 
+	 * @return
+	 */
+	public int getSkip()
+	{
+		return mSkip;
 	}
 }
