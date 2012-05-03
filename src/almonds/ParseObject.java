@@ -17,14 +17,19 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * The <b>ParseObject</b> is a local representation of data that can be saved and retrieved from the Parse cloud.
+ * The <b>ParseObject</b> is a local representation of data that can be saved
+ * and retrieved from the Parse cloud.
  * 
- * <p>The basic workflow for creating new data is to construct a new ParseObject, use put() to fill it with data, and then use save() to persist to the databa
+ * <p>
+ * The basic workflow for creating new data is to construct a new ParseObject,
+ * use put() to fill it with data, and then use save() to persist to the databa
  * 
- * <p>The basic workflow for accessing existing data is to use a ParseQuery to specify which existing data to retrieve.
+ * <p>
+ * The basic workflow for accessing existing data is to use a ParseQuery to
+ * specify which existing data to retrieve.
  * 
  * @author js
- *
+ * 
  */
 public class ParseObject
 {
@@ -32,8 +37,9 @@ public class ParseObject
 	private static final String FIELD_UPDATED_AT = "updatedAt";
 
 	/**
-	 * Creates a new ParseObject based upon a class name. If the class name is a special type (e.g. for ParseUser), then the 
-	 * appropriate type of ParseObject is returned.
+	 * Creates a new ParseObject based upon a class name. If the class name is a
+	 * special type (e.g. for ParseUser), then the appropriate type of
+	 * ParseObject is returned.
 	 * 
 	 * @param className
 	 * 
@@ -49,12 +55,15 @@ public class ParseObject
 	private Hashtable<String, Object> mData;
 
 	/**
-	 * Constructs a new ParseObject with no data in it. A ParseObject constructed in this way will not have an objectId and will 
-	 * not persist to the database until save() is called.
+	 * Constructs a new ParseObject with no data in it. A ParseObject
+	 * constructed in this way will not have an objectId and will not persist to
+	 * the database until save() is called.
 	 * 
-	 * Class names must be alphanumerical plus underscore, and start with a letter. It is recommended to name classes in CamelCaseLikeThis.
+	 * Class names must be alphanumerical plus underscore, and start with a
+	 * letter. It is recommended to name classes in CamelCaseLikeThis.
 	 * 
-	 * @param theClassName The className for this ParseObject.
+	 * @param theClassName
+	 *            The className for this ParseObject.
 	 */
 	public ParseObject(String theClassName)
 	{
@@ -64,14 +73,19 @@ public class ParseObject
 	}
 
 	/**
-	 * Used to support a query that returns an object from Parse encoded with JSON.  This constructor will create itself
-	 * from the JSON.  This is probably a poor method, especially if the JSON is mal-formed.  A better approach would be
-	 * move the handling to ParseQuery, where it alone would understands query responses from Parse.
+	 * Used to support a query that returns an object from Parse encoded with
+	 * JSON. This constructor will create itself from the JSON. This is probably
+	 * a poor method, especially if the JSON is mal-formed. A better approach
+	 * would be move the handling to ParseQuery, where it alone would
+	 * understands query responses from Parse.
 	 * 
-	 * @param theClassName The className for this ParseObject
-	 * @param json JSON encoded response from Parse corresponding to a ParseObject
+	 * @param theClassName
+	 *            The className for this ParseObject
+	 * @param json
+	 *            JSON encoded response from Parse corresponding to a
+	 *            ParseObject
 	 */
-	public ParseObject(String theClassName, JSONObject json)
+	ParseObject(String theClassName, JSONObject json)
 	{
 		mClassName = theClassName;
 		mData = new Hashtable<String, Object>();
@@ -102,14 +116,17 @@ public class ParseObject
 				}
 				else
 				{
-					Object value = json.get(name); // the value associated with key 'name'
-					
+					Object value = json.get(name); // the value associated with
+													// key 'name'
+
 					/*
-					 * Check for special fields, createdAt and updatedAt, which will be formatted and stored as Dates.
+					 * Check for special fields, createdAt and updatedAt, which
+					 * will be formatted and stored as Dates.
 					 */
 					if (name.equals(FIELD_CREATED_AT) || name.equals(FIELD_UPDATED_AT))
 					{
-						value = javax.xml.bind.DatatypeConverter.parseDateTime((String) value).getTime();						
+						value = javax.xml.bind.DatatypeConverter.parseDateTime((String) value)
+								.getTime();
 					}
 
 					put(name, value);
@@ -126,19 +143,21 @@ public class ParseObject
 	/**
 	 * Whether this object has a particular key. Same as 'has'.
 	 * 
-	 * @param key The key to check for
+	 * @param key
+	 *            The key to check for
 	 * @return Returns whether this object contains the key
 	 */
 	public boolean containsKey(String key)
 	{
 		return mData.containsKey(key);
 	}
-	
+
 	/**
-	 * A private helper class to facilitate running a ParseObject delete operation in the background.
+	 * A private helper class to facilitate running a ParseObject delete
+	 * operation in the background.
 	 * 
 	 * @author js
-	 *
+	 * 
 	 */
 	class DeleteInBackgroundThread extends Thread
 	{
@@ -146,7 +165,9 @@ public class ParseObject
 
 		/**
 		 * 
-		 * @param callback A function object of type DeleteCallback, whose method done will be called upon completion
+		 * @param callback
+		 *            A function object of type DeleteCallback, whose method
+		 *            done will be called upon completion
 		 */
 		DeleteInBackgroundThread(DeleteCallback callback)
 		{
@@ -156,14 +177,14 @@ public class ParseObject
 		public void run()
 		{
 			ParseException exception = null;
-			
+
 			try
 			{
 				delete();
 			}
 			catch (ParseException e)
 			{
-				exception = e;			
+				exception = e;
 			}
 
 			if (mDeleteCallback != null)
@@ -172,21 +193,24 @@ public class ParseObject
 			}
 		}
 	}
-	
+
 	/**
-	 *Deletes this object on the server in a background thread. Does nothing in particular when the save completes. 
-	 *Use this when you don't care if the delete works. 
+	 * Deletes this object on the server in a background thread. Does nothing in
+	 * particular when the save completes. Use this when you don't care if the
+	 * delete works.
 	 */
 	public void deleteInBackground()
 	{
-		deleteInBackground(null);		
+		deleteInBackground(null);
 	}
-	
+
 	/**
-	 * Deletes this object on the server in a background thread. This is preferable to using delete(), unless your code is already 
-	 * running from a background thread.
+	 * Deletes this object on the server in a background thread. This is
+	 * preferable to using delete(), unless your code is already running from a
+	 * background thread.
 	 * 
-	 * @param callback  callback.done(e) is called when the save completes.
+	 * @param callback
+	 *            callback.done(e) is called when the save completes.
 	 */
 	public void deleteInBackground(DeleteCallback callback)
 	{
@@ -195,9 +219,12 @@ public class ParseObject
 	}
 
 	/**
-	 * Deletes this object on the server. This does not delete or destroy the object locally.
+	 * Deletes this object on the server. This does not delete or destroy the
+	 * object locally.
 	 * 
-	 * @throws ParseException Throws an error if the object does not exist or if the internet fails.
+	 * @throws ParseException
+	 *             Throws an error if the object does not exist or if the
+	 *             internet fails.
 	 * 
 	 */
 	public void delete() throws ParseException
@@ -210,49 +237,27 @@ public class ParseObject
 			httpdelete.addHeader("X-Parse-Application-Id", Parse.getApplicationId());
 			httpdelete.addHeader("X-Parse-REST-API-Key", Parse.getRestAPIKey());
 
-			HttpResponse response = httpclient.execute(httpdelete);
-			HttpEntity entity = response.getEntity();
+			HttpResponse httpresponse = httpclient.execute(httpdelete);
+			HttpEntity entity = httpresponse.getEntity();
 
-			if (entity != null)
+			ParseResponse response = new ParseResponse(httpresponse);
+
+			if (!response.isFailed())
 			{
-				JSONObject jsonResponse = new JSONObject(EntityUtils.toString(entity));
-
-				//
-				// Check HTTP status code for error
-				//
-				int statusCode = response.getStatusLine().getStatusCode();
-
-				if (statusCode >= 200 && statusCode < 300)
-				{
-
-				}
-				else
-				{
-					throw new ParseException(jsonResponse.getInt("code"),
-							"Error getting the requested object.  Reason: "
-									+ jsonResponse.getString("error"));
-				}
+				// delete was successful
 			}
 			else
 			{
-				throw new ParseException(ParseException.CONNECTION_FAILED,
-						"Connection failed with Parse servers.");
+				throw response.getException();
 			}
 		}
 		catch (ClientProtocolException e)
 		{
-			throw new ParseException(ParseException.CONNECTION_FAILED,
-					"Connection failed with Parse servers.  Log: " + e.getMessage());
+			throw ParseResponse.getConnectionFailedException(e.getMessage());
 		}
 		catch (IOException e)
 		{
-			throw new ParseException(ParseException.CONNECTION_FAILED,
-					"Connection failed with Parse servers.  Log: " + e.getMessage());
-		}
-		catch (JSONException e)
-		{
-			throw new ParseException(ParseException.CONNECTION_FAILED,
-					"Bad JSON response from Parse servers. Log: " + e.getMessage());
+			throw ParseResponse.getConnectionFailedException(e.getMessage());
 		}
 	}
 
@@ -267,8 +272,9 @@ public class ParseObject
 	}
 
 	/**
-	 * Accessor to the object id. An object id is assigned as soon as an object is saved to the server. The combination of a className and an 
-	 * objectId uniquely identifies an object in your application.
+	 * Accessor to the object id. An object id is assigned as soon as an object
+	 * is saved to the server. The combination of a className and an objectId
+	 * uniquely identifies an object in your application.
 	 * 
 	 * @return The object id.
 	 */
@@ -276,19 +282,20 @@ public class ParseObject
 	{
 		return (String) mData.get("objectId");
 	}
-	
-	
+
 	/**
-	 * Setter for the object id. In general you do not need to use this. However, in some cases this can be convenient. For example, if you are serializing a ParseObject yourself 
-	 * and wish to recreate it, you can use this to recreate the ParseObject exactly.
+	 * Setter for the object id. In general you do not need to use this.
+	 * However, in some cases this can be convenient. For example, if you are
+	 * serializing a ParseObject yourself and wish to recreate it, you can use
+	 * this to recreate the ParseObject exactly.
 	 * 
 	 * @param objectId
 	 */
 	public void setObjectId(String objectId)
 	{
-		mData.put("objectId", objectId);		
+		mData.put("objectId", objectId);
 	}
-	
+
 	public void setCreatedAt(String createdAt)
 	{
 		mData.put("createdAt", createdAt);
@@ -297,24 +304,26 @@ public class ParseObject
 	/**
 	 * Access a ParsePointer value.
 	 * 
-	 * @param key The key to access the value for.
-	 * @return Returns null if there is no such key or if it is not a ParsePointer.
+	 * @param key
+	 *            The key to access the value for.
+	 * @return Returns null if there is no such key or if it is not a
+	 *         ParsePointer.
 	 */
 	public ParsePointer getParsePointer(String key)
 	{
 		Object value = get(key);
-		
+
 		// test for no such key or not a ParsePointer
-		
+
 		if (value == null || value.getClass() != ParsePointer.class)
 			return null;
-				
+
 		return (ParsePointer) value;
 	}
 
 	/**
-	 * Creates and returns a new ParsePointer object that points to the object it's called on.  Use when other
-	 * objects need to point to *this* object.
+	 * Creates and returns a new ParsePointer object that points to the object
+	 * it's called on. Use when other objects need to point to *this* object.
 	 * 
 	 * @return A ParsePointer object set to point to this object.
 	 */
@@ -326,91 +335,102 @@ public class ParseObject
 	/**
 	 * Access a string value.
 	 * 
-	 * @param key The key to access the value for.
-	 * @return Returns null if there is no such key or if it is not a String. 
+	 * @param key
+	 *            The key to access the value for.
+	 * @return Returns null if there is no such key or if it is not a String.
 	 */
 	public String getString(String key)
 	{
 		Object value = get(key);
-		
+
 		// test for no such key or value not a string
-		
+
 		if (value == null || value.getClass() != String.class)
 			return null;
-		
+
 		return (String) value;
 	}
-	
+
 	/**
 	 * Access a boolean value.
 	 * 
-	 * @param key  The key to access the value for.
+	 * @param key
+	 *            The key to access the value for.
 	 * @return Returns false if there is no such key or if it is not a boolean.
 	 */
 	public Boolean getBoolean(String key)
 	{
 		Object value = get(key);
-		
+
 		// test for no such key or value not a string
-		
+
 		if (value == null || value.getClass() != Boolean.class)
 			return null;
-		
-		return (Boolean) value;		
+
+		return (Boolean) value;
 	}
-	
+
 	/**
-	 * Encapsulates access to the HashTable that stores key/value pairs stored by this Object
-	 *  
-	 * @param key The key to access the value for
+	 * Encapsulates access to the HashTable that stores key/value pairs stored
+	 * by this Object
+	 * 
+	 * @param key
+	 *            The key to access the value for
 	 * @return Returns null if there is no such key
 	 */
 	private Object get(String key)
 	{
 		return mData.get(key);
 	}
-	
+
 	/**
 	 * Access a Date value.
 	 * 
-	 * @param key The key to access the value for.
+	 * @param key
+	 *            The key to access the value for.
 	 * @return Returns null if there is no such key or if it is not a Date.
 	 */
 	public Date getDate(String key)
 	{
 		Object value = get(key);
-		
+
 		// test for no such key or value not a string
-		
+
 		if (value == null || value.getClass() != Date.class)
 			return null;
-		
+
 		return (Date) value;
-	}	
-	
+	}
+
 	/**
-	 * 	Access a long value.
+	 * Access a long value.
 	 * 
-	 * @param key The key to access the value for. 
+	 * @param key
+	 *            The key to access the value for.
 	 * @return Returns null if there is no such key or if it is not a long.
 	 */
 	public Long getLong(String key)
 	{
 		Object value = get(key);
-		
+
 		// test for no such key or value not a long
-		
+
 		if (value == null || value.getClass() != Long.class)
 			return null;
-		
+
 		return (Long) value;
 	}
 
 	/**
-	 * Add a key-value pair to this object. It is recommended to name keys in partialCamelCaseLikeThis.
+	 * Add a key-value pair to this object. It is recommended to name keys in
+	 * partialCamelCaseLikeThis.
 	 * 
-	 * @param key Keys must be alphanumerical plus underscore, and start with a letter.
-	 * @param value Values may be numerical, String, JSONObject, JSONArray, JSONObject.NULL, or other ParseObjects. value may not be null.
+	 * @param key
+	 *            Keys must be alphanumerical plus underscore, and start with a
+	 *            letter.
+	 * @param value
+	 *            Values may be numerical, String, JSONObject, JSONArray,
+	 *            JSONObject.NULL, or other ParseObjects. value may not be null.
 	 */
 	public void put(String key, Object value)
 	{
@@ -418,10 +438,12 @@ public class ParseObject
 	}
 
 	/**
-	 * Saves this object to the server. Typically, you should use saveInBackground(com.parse.SaveCallback) instead of this, 
-	 * unless you are managing your own threading.
-
-	 * @throws ParseException Throws an exception if the server is inaccessible.
+	 * Saves this object to the server. Typically, you should use
+	 * saveInBackground(com.parse.SaveCallback) instead of this, unless you are
+	 * managing your own threading.
+	 * 
+	 * @throws ParseException
+	 *             Throws an exception if the server is inaccessible.
 	 */
 	public void save() throws ParseException
 	{
@@ -434,62 +456,54 @@ public class ParseObject
 			httppost.addHeader("Content-Type", "application/json");
 
 			httppost.setEntity(new StringEntity(toJSONObject().toString()));
-			HttpResponse response = httpclient.execute(httppost);
-			HttpEntity entity = response.getEntity();
+			HttpResponse httpresponse = httpclient.execute(httppost);
 
-			if (entity != null)
+			ParseResponse response = new ParseResponse(httpresponse);
+
+			if (!response.isFailed())
 			{
-				JSONObject jsonResponse = new JSONObject(EntityUtils.toString(entity));
+				JSONObject jsonResponse = response.getJsonObject();
 
-				//
-				// Check HTTP status code for error
-				//
-				int statusCode = response.getStatusLine().getStatusCode();
-
-				if (statusCode >= 200 && statusCode < 300)
+				if (jsonResponse == null)
 				{
-					//
-					// the response contains the new objectId and createdAt fields
-					
+					throw response.getException();
+				}
+
+				try
+				{
 					setObjectId(jsonResponse.getString("objectId"));
 					setCreatedAt(jsonResponse.getString("createdAt"));
 				}
-				else
+				catch (JSONException e)
 				{
-					throw new ParseException(jsonResponse.getInt("code"),
-							"Error getting the requested object.  Reason: "
-									+ jsonResponse.getString("error"));
+					throw new ParseException(
+							ParseException.INVALID_JSON,
+							"Although Parse reports object successfully saved, the response was invalid.",
+							e);
 				}
-			}
 
+			}
+			else
+			{
+				throw response.getException();
+			}
 		}
 		catch (ClientProtocolException e)
 		{
-			System.out.println(e.getMessage());
+			throw ParseResponse.getConnectionFailedException(e);
 		}
 		catch (IOException e)
 		{
-			System.out.println(e.getMessage());
+			throw ParseResponse.getConnectionFailedException(e);
 		}
-		catch (org.apache.http.ParseException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		catch (JSONException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
 	}
 
-	
 	/**
-	 * A private helper class to facilitate running a ParseObject save operation in the background.
+	 * A private helper class to facilitate running a ParseObject save operation
+	 * in the background.
 	 * 
 	 * @author js
-	 *
+	 * 
 	 */
 	class SaveInBackgroundThread extends Thread
 	{
@@ -497,7 +511,9 @@ public class ParseObject
 
 		/**
 		 * 
-		 * @param callback A function object of type Savecallback, whose method done will be called upon completion
+		 * @param callback
+		 *            A function object of type Savecallback, whose method done
+		 *            will be called upon completion
 		 */
 		SaveInBackgroundThread(SaveCallback callback)
 		{
@@ -507,14 +523,14 @@ public class ParseObject
 		public void run()
 		{
 			ParseException exception = null;
-			
+
 			try
 			{
 				save();
 			}
 			catch (ParseException e)
 			{
-				exception = e;			
+				exception = e;
 			}
 
 			if (mSaveCallback != null)
@@ -525,18 +541,22 @@ public class ParseObject
 	}
 
 	/**
-	 * Saves this object to the server in a background thread. This is preferable to using save(), unless your code is already running from a background thread.
+	 * Saves this object to the server in a background thread. This is
+	 * preferable to using save(), unless your code is already running from a
+	 * background thread.
 	 * 
-	 * @param callback callback.done(e) is called when the save completes.
+	 * @param callback
+	 *            callback.done(e) is called when the save completes.
 	 */
 	public void saveInBackground(SaveCallback callback)
 	{
 		SaveInBackgroundThread t = new SaveInBackgroundThread(callback);
 		t.start();
 	}
-	
+
 	/**
-	 * Saves this object to the server in a background thread. Use this when you do not have code to run on completion of the push.
+	 * Saves this object to the server in a background thread. Use this when you
+	 * do not have code to run on completion of the push.
 	 */
 	public void saveInBackground()
 	{
@@ -559,10 +579,12 @@ public class ParseObject
 
 		return jo;
 	}
-	
+
 	/**
-	 * This reports time as the server sees it, so that if you make changes to a ParseObject, then wait a while, and then call save(), 
-	 * the updated time will be the time of the save() call rather than the time the object was changed locally.
+	 * This reports time as the server sees it, so that if you make changes to a
+	 * ParseObject, then wait a while, and then call save(), the updated time
+	 * will be the time of the save() call rather than the time the object was
+	 * changed locally.
 	 * 
 	 * @return The last time this object was updated on the server.
 	 */
@@ -570,10 +592,12 @@ public class ParseObject
 	{
 		return getDate(FIELD_UPDATED_AT);
 	}
-	
+
 	/**
-	 * This reports time as the server sees it, so that if you create a ParseObject, then wait a while, and then call save(), the 
-	 * creation time will be the time of the first save() call rather than the time the object was created locally.
+	 * This reports time as the server sees it, so that if you create a
+	 * ParseObject, then wait a while, and then call save(), the creation time
+	 * will be the time of the first save() call rather than the time the object
+	 * was created locally.
 	 * 
 	 * @return The first time this object was saved on the server.
 	 */
@@ -581,11 +605,13 @@ public class ParseObject
 	{
 		return getDate(FIELD_CREATED_AT);
 	}
-	
+
 	/**
-	 * Decides if the calling ParseObject and the parameter ParseObject have the same Parse Id.
+	 * Decides if the calling ParseObject and the parameter ParseObject have the
+	 * same Parse Id.
 	 * 
-	 * @param asThisObject Parse Object to compare with
+	 * @param asThisObject
+	 *            Parse Object to compare with
 	 * @return True if the Ids of the two objects are equal, false otherwise
 	 */
 	public boolean hasSameId(ParseObject asThisObject)

@@ -1,5 +1,8 @@
 package almonds;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class ParseException extends Exception
 {
 	private static final long serialVersionUID = 1L;
@@ -42,6 +45,12 @@ public class ParseException extends Exception
 	public static final int USERNAME_MISSING = 200;
 	public static final int USERNAME_TAKEN = 202;
 
+
+	public ParseException(int theCode, String theMessage, Throwable causeThrowable)
+	{
+		this(theCode, theMessage + " Cause: " + causeThrowable.getMessage());		
+	}
+	
 	public ParseException(int theCode, String theMessage)
 	{
 		super(theMessage);

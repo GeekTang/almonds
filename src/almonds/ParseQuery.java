@@ -33,8 +33,15 @@ public class ParseQuery
 	private SimpleEntry mWhereEqualTo = null; // tracks "WHERE" constraints
 	private List<String> mOrder = new ArrayList<String>(); // tracks keys to
 															// sort by
+
 	private int mLimit = -1;
 	private int mSkip = 0;
+
+	// query = key: [constraints]
+	// constraint = optional code : [value]
+
+	// where = key, constraint code ("gte", "lte")
+	// constraint code = {
 
 	/**
 	 * Constructs a query. A default query with no further parameters will
@@ -114,8 +121,6 @@ public class ParseQuery
 	 */
 	public ParseObject get(String theObjectId) throws ParseException
 	{
-		ParseObject o = null;
-
 		try
 		{
 			HttpClient httpclient = new DefaultHttpClient();
@@ -124,58 +129,27 @@ public class ParseQuery
 			httpget.addHeader("X-Parse-Application-Id", Parse.getApplicationId());
 			httpget.addHeader("X-Parse-REST-API-Key", Parse.getRestAPIKey());
 
-			HttpResponse response = httpclient.execute(httpget);
-			HttpEntity entity = response.getEntity();
+			HttpResponse httpResponse = httpclient.execute(httpget);
 
-			if (entity != null)
+			ParseResponse response = new ParseResponse(httpResponse);
+
+			if (!response.isFailed())
 			{
-				JSONObject jsonResponse = new JSONObject(EntityUtils.toString(entity));
-
-				//
-				// Check HTTP status code for error
-				//
-				int statusCode = response.getStatusLine().getStatusCode();
-
-				if (statusCode >= 200 && statusCode < 300)
-				{
-					o = new ParseObject(mClassName, jsonResponse);
-				}
-				else
-				{
-					throw new ParseException(jsonResponse.getInt("code"),
-							"Error getting the requested object.  Reason: "
-									+ jsonResponse.getString("error"));
-				}
+				return new ParseObject(mClassName, response.getJsonObject());
 			}
 			else
 			{
-				throw new ParseException(ParseException.CONNECTION_FAILED,
-						"Connection failed with Parse servers.");
+				throw response.getException();
 			}
-
-			return o;
 		}
 		catch (ClientProtocolException e)
 		{
-			e.printStackTrace();
+			throw ParseResponse.getConnectionFailedException(e.getMessage());
 		}
 		catch (IOException e)
 		{
-			e.printStackTrace();
+			throw ParseResponse.getConnectionFailedException(e.getMessage());
 		}
-		catch (ParseException e)
-		{
-			e.printStackTrace();
-		}
-		catch (JSONException e)
-		{
-			e.printStackTrace();
-		}
-		finally
-		{
-		}
-
-		return o;
 	}
 
 	/**
@@ -193,7 +167,19 @@ public class ParseQuery
 
 		public void run()
 		{
-			mFindCallback.done(find());
+			List<ParseObject> objects = null;
+			ParseException exception = null;
+			
+			try
+			{
+				objects = find();
+			}
+			catch (ParseException e)
+			{
+				exception = e;
+			}
+			
+			mFindCallback.done (objects, exception);
 		}
 	}
 
@@ -219,28 +205,35 @@ public class ParseQuery
 	 * @return A list of all ParseObjects obeying the conditions set in this
 	 *         query.
 	 */
-	public List<ParseObject> find()
+	public List<ParseObject> find() throws ParseException
 	{
-		ArrayList<ParseObject> objects = null;
-
 		try
 		{
-
 			HttpClient httpclient = new DefaultHttpClient();
 			HttpGet httpget = new HttpGet(Parse.getParseAPIUrlClasses() + mClassName
 					+ getURLConstraints());
 			httpget.addHeader("X-Parse-Application-Id", Parse.getApplicationId());
 			httpget.addHeader("X-Parse-REST-API-Key", Parse.getRestAPIKey());
 
-			HttpResponse response = httpclient.execute(httpget);
-			HttpEntity entity = response.getEntity();
+			HttpResponse httpResponse = httpclient.execute(httpget);
+			ParseResponse parseResponse = new ParseResponse(httpResponse);
 
-			if (entity != null)
+			if (parseResponse.isFailed())
 			{
-				JSONObject obj = new JSONObject(EntityUtils.toString(entity));
-				JSONArray results = obj.getJSONArray("results");
+				throw parseResponse.getException();
+			}
 
-				objects = new ArrayList<ParseObject>();
+			JSONObject obj = parseResponse.getJsonObject();
+
+			if (obj == null)
+			{
+				throw parseResponse.getException();
+			}
+
+			try
+			{
+				ArrayList<ParseObject> objects = new ArrayList<ParseObject>();
+				JSONArray results = obj.getJSONArray("results");
 
 				for (int i = 0; i < results.length(); i++)
 				{
@@ -255,30 +248,23 @@ public class ParseQuery
 					objects.add(parseObject);
 
 				}
-			}
 
+				return objects;
+			}
+			catch (JSONException e)
+			{
+				throw new ParseException(ParseException.INVALID_JSON,
+						"Error parsing the array of results returned by query.", e);
+			}
 		}
 		catch (ClientProtocolException e)
 		{
-			e.printStackTrace();
+			throw ParseResponse.getConnectionFailedException(e);
 		}
 		catch (IOException e)
 		{
-			e.printStackTrace();
+			throw ParseResponse.getConnectionFailedException(e);
 		}
-		catch (org.apache.http.ParseException e)
-		{
-			e.printStackTrace();
-		}
-		catch (JSONException e)
-		{
-			e.printStackTrace();
-		}
-		finally
-		{
-		}
-
-		return objects;
 	}
 
 	/**
@@ -298,13 +284,30 @@ public class ParseQuery
 	}
 
 	/**
+	 * Add a constraint to the query that requires a particular key's value to
+	 * be greater than the provided value.
+	 * 
+	 * @param key
+	 *            The key to check.
+	 * @param value
+	 *            The value that provides an lower bound.
+	 * @return Returns the query, so you can chain this call.
+	 */
+	public ParseQuery whereGreaterThan(String key, Object value)
+	{
+		// MultiValueMap map = new MultiValueMap();
+		return this;
+	}
+
+	/**
 	 * Helper to easily decide if any where or order constraints have been set.
 	 * 
 	 * @return True if any type of constraints have been placed on the Query
 	 */
 	private boolean hasConstraints()
 	{
-		return hasWhereConstraints() || hasOrderConstraints() || hasLimitConstraints();
+		return hasWhereConstraints() || hasOrderConstraints() || hasLimitConstraints()
+				|| hasSkipConstraints();
 	}
 
 	private boolean hasLimitConstraints()
@@ -321,7 +324,7 @@ public class ParseQuery
 	{
 		return !mOrder.isEmpty();
 	}
-	
+
 	private boolean hasSkipConstraints()
 	{
 		return mSkip > 0;
@@ -329,8 +332,9 @@ public class ParseQuery
 
 	/**
 	 * Constraints on a Query using the REST API are communicated as 'where' and
-	 * 'order', 'limit' and 'skip' parameters in the URL. This method takes the current constraints
-	 * on the Query and returns them formatted as a partial URL.
+	 * 'order', 'limit' and 'skip' parameters in the URL. This method takes the
+	 * current constraints on the Query and returns them formatted as a partial
+	 * URL.
 	 * 
 	 * @return The URL formatted Query constraints.
 	 */
@@ -348,8 +352,16 @@ public class ParseQuery
 
 				if (hasWhereConstraints())
 				{
+					if (!firstParam)
+					{
+						url += "&";
+					}
+					else
+					{
+						firstParam = false;
+					}
+
 					url += "where=" + URLEncoder.encode(getJSONWhereConstraints(), "UTF-8");
-					firstParam = false;
 				}
 
 				if (hasOrderConstraints())
@@ -393,9 +405,9 @@ public class ParseQuery
 
 					url += URLEncoder.encode("limit=" + mLimit, "UTF-8");
 				}
-				
+
 				if (hasSkipConstraints())
-				{				
+				{
 					if (!firstParam)
 					{
 						url += "&";
@@ -404,7 +416,7 @@ public class ParseQuery
 					{
 						firstParam = false;
 					}
-					
+
 					url += URLEncoder.encode("skip=" + mSkip, "UTF-8");
 				}
 			}
@@ -518,9 +530,10 @@ public class ParseQuery
 	{
 		return mLimit;
 	}
-	
+
 	/**
-	 * Controls the number of results to skip before returning any results. This is useful for pagination. Default is to skip zero results.
+	 * Controls the number of results to skip before returning any results. This
+	 * is useful for pagination. Default is to skip zero results.
 	 * 
 	 * @param newSkip
 	 */
@@ -530,10 +543,10 @@ public class ParseQuery
 		{
 			return;
 		}
-		
-		mSkip = newSkip;		
+
+		mSkip = newSkip;
 	}
-	
+
 	/**
 	 * Accessor for the skip value.
 	 * 
