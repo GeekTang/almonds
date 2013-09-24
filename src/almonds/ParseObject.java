@@ -10,6 +10,7 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
@@ -300,6 +301,11 @@ public class ParseObject
 	{
 		mData.put("createdAt", createdAt);
 	}
+	
+	public void setUpdatedAt(String updatedAt)
+	{
+		mData.put(FIELD_UPDATED_AT, updatedAt);
+	}
 
 	/**
 	 * Access a ParsePointer value.
@@ -497,6 +503,67 @@ public class ParseObject
 			throw ParseResponse.getConnectionFailedException(e);
 		}
 	}
+	
+	/**
+	 * Update this object to the server. Typically, you should use
+	 * saveInBackground(com.parse.SaveCallback) instead of this, unless you are
+	 * managing your own threading.
+	 * 
+	 * @throws ParseException
+	 *             Throws an exception if the server is inaccessible.
+	 */
+	public void update() throws ParseException
+	{
+		try
+		{
+			HttpClient httpclient = new DefaultHttpClient();
+			HttpPut http = new HttpPut(Parse.getParseAPIUrlClasses() + mClassName + "/" + getObjectId());
+			http.addHeader("X-Parse-Application-Id", Parse.getApplicationId());
+			http.addHeader("X-Parse-REST-API-Key", Parse.getRestAPIKey());
+			http.addHeader("Content-Type", "application/json");
+
+			http.setEntity(new StringEntity(toJSONObject().toString()));
+			HttpResponse httpresponse = httpclient.execute(http);
+
+			ParseResponse response = new ParseResponse(httpresponse);
+
+			if (!response.isFailed())
+			{
+				JSONObject jsonResponse = response.getJsonObject();
+
+				if (jsonResponse == null)
+				{
+					throw response.getException();
+				}
+
+				try
+				{
+					setUpdatedAt(jsonResponse.getString(FIELD_UPDATED_AT));
+				}
+				catch (JSONException e)
+				{
+					throw new ParseException(
+							ParseException.INVALID_JSON,
+							"Although Parse reports object successfully updated, the response was invalid.",
+							e);
+				}
+
+			}
+			else
+			{
+				throw response.getException();
+			}
+		}
+		catch (ClientProtocolException e)
+		{
+			throw ParseResponse.getConnectionFailedException(e);
+		}
+		catch (IOException e)
+		{
+			throw ParseResponse.getConnectionFailedException(e);
+		}
+	}
+	
 
 	/**
 	 * A private helper class to facilitate running a ParseObject save operation
