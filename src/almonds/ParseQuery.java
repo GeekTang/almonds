@@ -123,7 +123,7 @@ public class ParseQuery
 	{
 		try
 		{
-			HttpClient httpclient = new DefaultHttpClient();
+			HttpClient httpclient = Util.newHttpClient();
 			HttpGet httpget = new HttpGet(Parse.getParseAPIUrlClasses() + mClassName + "/"
 					+ theObjectId);
 			httpget.addHeader("X-Parse-Application-Id", Parse.getApplicationId());
@@ -209,7 +209,7 @@ public class ParseQuery
 	{
 		try
 		{
-			HttpClient httpclient = new DefaultHttpClient();
+			HttpClient httpclient = Util.newHttpClient();
 			HttpGet httpget = new HttpGet(Parse.getParseAPIUrlClasses() + mClassName
 					+ getURLConstraints());
 			httpget.addHeader("X-Parse-Application-Id", Parse.getApplicationId());

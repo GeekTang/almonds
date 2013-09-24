@@ -232,7 +232,7 @@ public class ParseObject
 	{
 		try
 		{
-			HttpClient httpclient = new DefaultHttpClient();
+			HttpClient httpclient = Util.newHttpClient();
 			HttpDelete httpdelete = new HttpDelete(Parse.getParseAPIUrlClasses() + mClassName + "/"
 					+ getObjectId());
 			httpdelete.addHeader("X-Parse-Application-Id", Parse.getApplicationId());
@@ -455,7 +455,7 @@ public class ParseObject
 	{
 		try
 		{
-			HttpClient httpclient = new DefaultHttpClient();
+			HttpClient httpclient = Util.newHttpClient();
 			HttpPost httppost = new HttpPost(Parse.getParseAPIUrlClasses() + mClassName);
 			httppost.addHeader("X-Parse-Application-Id", Parse.getApplicationId());
 			httppost.addHeader("X-Parse-REST-API-Key", Parse.getRestAPIKey());
@@ -516,7 +516,7 @@ public class ParseObject
 	{
 		try
 		{
-			HttpClient httpclient = new DefaultHttpClient();
+			HttpClient httpclient = Util.newHttpClient();
 			HttpPut http = new HttpPut(Parse.getParseAPIUrlClasses() + mClassName + "/" + getObjectId());
 			http.addHeader("X-Parse-Application-Id", Parse.getApplicationId());
 			http.addHeader("X-Parse-REST-API-Key", Parse.getRestAPIKey());
